@@ -6,6 +6,21 @@ use btleplug::platform::{Adapter, Manager};
 use futures::stream::StreamExt;
 use std::error::Error;
 use ruuvi_sensor_protocol::{SensorValues, Temperature, MacAddress};
+use std::fmt::Display;
+use std::collections::HashMap;
+use hwaddr::HwAddr;
+
+struct RuuviTag {
+    name: String,
+    address: HwAddr,
+    sensorvalues: SensorValues,
+}
+
+impl Display for RuuviTag {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())
+    }
+}
 
 async fn get_central(manager: &Manager) -> Adapter {
     let adapters = manager.adapters().await.unwrap();
@@ -14,6 +29,13 @@ async fn get_central(manager: &Manager) -> Adapter {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    
+    let knownSensors: HashMap<HwAddr, String> = HashMap::from([
+        (HwAddr::from([0xc4, 0xb, 0x5, 0xbd, 0xe9, 0xd5]), String::from("Meltdown Britney")),
+        (HwAddr::from([0xd1, 0xd8, 0x9a, 0xe1, 0x46, 0x3a]), String::from("Climate Change Joe")),
+    ]);
+
+
     let manager = Manager::new().await?;
 
     // get the first bluetooth adapter
@@ -39,7 +61,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
             } => {
                 if let Some(ruuvidata) = &manufacturer_data.get(&0x0499) {
                     let sensordata = SensorValues::from_manufacturer_specific_data(0x0499, &ruuvidata)?;
-                    println!("{:}C at {:x?}", (sensordata.temperature_as_millicelsius().unwrap() as f64)/1000.0, sensordata.mac_address().unwrap());
+                    let ruuvitag = RuuviTag{
+                        name: knownSensors.get(sensordata.mac_address().unwrap())
+                    }
                 }
             }
             _ => {}
