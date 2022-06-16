@@ -5,7 +5,7 @@ use btleplug::api::{Central, CentralEvent, Manager as _, ScanFilter};
 use btleplug::platform::{Adapter, Manager};
 use futures::stream::StreamExt;
 use std::error::Error;
-use ruuvi_sensor_protocol::{SensorValues, Temperature, MacAddress};
+use ruuvi_sensor_protocol::{SensorValues, Temperature, MacAddress, MeasurementSequenceNumber};
 use std::fmt::Display;
 use std::collections::HashMap;
 use hwaddr::HwAddr;
@@ -19,7 +19,8 @@ struct RuuviTag {
 impl Display for RuuviTag {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let temperature = (self.sensorvalues.temperature_as_millicelsius().unwrap() as f64) / 1000.0;
-        write!(f, "{} ({})\t{}", self.name, self.address, temperature)?;
+        let seqnr = self.sensorvalues.measurement_sequence_number().unwrap_or(0);
+        write!(f, "{} ({})\tm#{}\t{}°C", self.name, self.address, seqnr, temperature)?;
         Ok(())
     }
 }
@@ -32,7 +33,7 @@ async fn get_central(manager: &Manager) -> Adapter {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     
-    let known_sensors: HashMap<HwAddr, String> = HashMap::from([
+    let known_sensors = HashMap::from([
         (HwAddr::from([0xc4, 0xb, 0x5, 0xbd, 0xe9, 0xd5]), String::from("Meltdown Britney")),
         (HwAddr::from([0xd1, 0xd8, 0x9a, 0xe1, 0x46, 0x3a]), String::from("Climate Change Joe")),
     ]);
