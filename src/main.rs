@@ -1,14 +1,14 @@
 // See the "macOS permissions note" in README.md before running this on macOS
 // Big Sur or later.
+use std::collections::HashMap;
+use std::error::Error;
+use std::fmt::Display;
 
 use btleplug::api::{Central, CentralEvent, Manager as _, ScanFilter};
 use btleplug::platform::{Adapter, Manager};
 use futures::stream::StreamExt;
 use hwaddr::HwAddr;
 use ruuvi_sensor_protocol::{MacAddress, MeasurementSequenceNumber, SensorValues, Temperature};
-use std::collections::HashMap;
-use std::error::Error;
-use std::fmt::Display;
 
 struct RuuviTag {
     name: String,
