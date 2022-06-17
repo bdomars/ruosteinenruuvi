@@ -8,6 +8,7 @@ use btleplug::api::{Central, CentralEvent, Manager as _, ScanFilter};
 use btleplug::platform::{Adapter, Manager};
 use futures::stream::StreamExt;
 use hwaddr::HwAddr;
+use influxdb2::Client;
 use ruuvi_sensor_protocol::{MacAddress, MeasurementSequenceNumber, SensorValues, Temperature};
 
 struct RuuviTag {
@@ -49,6 +50,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
         ),
     ]);
 
+    let influx_host = std::env::var("INFLUXDB_HOST").unwrap_or("127.0.0.1".to_string());
+    let influx_org = std::env::var("INFLUXDB_ORG").unwrap_or("Walkbase Office".to_string());
+    let influx_token = std::env::var("INFLUXDB_TOKEN").unwrap_or(
+        "PhYjnngPEOA8aUKHzJm9P5-YIkSOstJUMOp8j-zBZSTkiC7mVimp92q5x7_P3YQQ1zVoy81Rpukgo0CKtfhdXQ=="
+            .to_string(),
+    );
+
+    let influx_client = Client::new(influx_host, &influx_org, influx_token);
+
     let manager = Manager::new().await?;
 
     // get the first bluetooth adapter
@@ -85,6 +95,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         address: hwaddr,
                         sensorvalues: sensordata,
                     };
+
+                    let temperature =
+                    (ruuvitag.sensorvalues.temperature_as_millicelsius().unwrap() as f64) / 1000.0;
+
+                    influx_client.write_line_protocol(
+                        &influx_org,
+                        "office",
+                        format!("stat,mac={},sensorname={} temperature={}", ruuvitag.address, ruuvitag.name, temperature)
+                    ).await?;
+
                     println!("{}", ruuvitag)
                 }
             }
