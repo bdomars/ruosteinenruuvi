@@ -1,4 +1,4 @@
-FROM ghcr.io/cross-rs/aarch64-unknown-linux-gnu:main
+FROM raspi-ubuntu-2204:latest
 
 # Install libdbus libraries and pkg-config
 RUN dpkg --add-architecture arm64	 && \

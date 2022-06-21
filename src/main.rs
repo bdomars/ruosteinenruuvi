@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         ),
     ]);
 
-    let influx_host = std::env::var("INFLUXDB_HOST").unwrap_or("127.0.0.1".to_string());
+    let influx_host = std::env::var("INFLUXDB_HOST").unwrap_or("http://127.0.0.1:8086".to_string());
     let influx_org = std::env::var("INFLUXDB_ORG").unwrap_or("Walkbase Office".to_string());
     let influx_token = std::env::var("INFLUXDB_TOKEN").unwrap_or(
         "PhYjnngPEOA8aUKHzJm9P5-YIkSOstJUMOp8j-zBZSTkiC7mVimp92q5x7_P3YQQ1zVoy81Rpukgo0CKtfhdXQ=="
@@ -58,6 +58,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     );
 
     let influx_client = Client::new(influx_host, &influx_org, influx_token);
+
+    let health = influx_client.health().await;
+    if health.is_err() {
+        println!("{:#?}", health);
+        panic!("no influx :(");
+    }
 
     let manager = Manager::new().await?;
 
@@ -96,14 +102,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         sensorvalues: sensordata,
                     };
 
-                    let temperature =
-                    (ruuvitag.sensorvalues.temperature_as_millicelsius().unwrap() as f64) / 1000.0;
+                    let temperature = (ruuvitag.sensorvalues.temperature_as_millicelsius().unwrap()
+                        as f64)
+                        / 1000.0;
 
-                    influx_client.write_line_protocol(
-                        &influx_org,
-                        "office",
-                        format!("stat,mac={},sensorname={} temperature={}", ruuvitag.address, ruuvitag.name, temperature)
-                    ).await?;
+                    influx_client
+                        .write_line_protocol(
+                            &influx_org,
+                            "office",
+                            format!(
+                                "stat,mac={},sensorname={} temperature={}",
+                                ruuvitag.address, ruuvitag.name, temperature
+                            ),
+                        )
+                        .await?;
 
                     println!("{}", ruuvitag)
                 }
