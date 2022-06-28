@@ -3,9 +3,11 @@
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::Display;
+use std::time::SystemTime;
 
 use btleplug::api::{Central, CentralEvent, Manager as _, ScanFilter};
 use btleplug::platform::{Adapter, Manager};
+use escape_string::escape;
 use futures::stream::StreamExt;
 use hwaddr::HwAddr;
 use influxdb2::Client;
@@ -15,21 +17,6 @@ struct RuuviTag {
     name: String,
     address: HwAddr,
     sensorvalues: SensorValues,
-}
-
-impl Display for RuuviTag {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let temperature =
-            (self.sensorvalues.temperature_as_millicelsius().unwrap() as f64) / 1000.0;
-        let seqnr = self.sensorvalues.measurement_sequence_number().unwrap_or(0);
-
-        write!(
-            f,
-            "{} ({})\tm#{}\t{}°C",
-            self.name, self.address, seqnr, temperature
-        )?;
-        Ok(())
-    }
 }
 
 async fn get_central(manager: &Manager) -> Adapter {
@@ -106,18 +93,27 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         as f64)
                         / 1000.0;
 
-                    influx_client
-                        .write_line_protocol(
-                            &influx_org,
-                            "office",
-                            format!(
-                                "stat,mac={},sensorname={} temperature={}",
-                                ruuvitag.address, ruuvitag.name, temperature
-                            ),
-                        )
-                        .await?;
+                    let duration_since_epoch = SystemTime::now()
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap();
 
-                    println!("{}", ruuvitag)
+                    let timestamp_nanos = duration_since_epoch.as_nanos(); // u128
+
+                    let linestr = format!(
+                        "measurement,mac={},sensorname={} temp={} {}",
+                        ruuvitag.address,
+                        escape(&ruuvitag.name),
+                        temperature,
+                        timestamp_nanos,
+                    );
+
+                    let res = influx_client
+                        .write_line_protocol(&influx_org, "office", linestr)
+                        .await;
+
+                    if res.is_err() {
+                        println!("failed to write data: {}", res.unwrap_err());
+                    }
                 }
             }
             _ => {}
