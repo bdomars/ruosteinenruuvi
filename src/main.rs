@@ -2,7 +2,6 @@
 // Big Sur or later.
 use std::collections::HashMap;
 use std::error::Error;
-use std::fmt::Display;
 use std::time::SystemTime;
 
 use btleplug::api::{Central, CentralEvent, Manager as _, ScanFilter};
@@ -11,7 +10,7 @@ use escape_string::escape;
 use futures::stream::StreamExt;
 use hwaddr::HwAddr;
 use influxdb2::Client;
-use ruuvi_sensor_protocol::{MacAddress, MeasurementSequenceNumber, SensorValues, Temperature};
+use ruuvi_sensor_protocol::{MacAddress, SensorValues, Temperature};
 
 struct RuuviTag {
     name: String,
