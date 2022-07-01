@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 hwaddr = "0.1"
 ruuvi-sensor-protocol = "0.5"
+btleplug = "0.9"
+futures = "0.3.21"
+tokio = { version = "1", features = ["full"] }
