@@ -1,10 +1,8 @@
-use std::{error::Error};
-
 use ruuvi::scan_btle;
 use tokio::{sync::broadcast};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() {
     let (tx, mut rx) = broadcast::channel(16);
 
     tokio::spawn(async move {
