@@ -1,3 +1,6 @@
+#![allow(unused_variables)]
+#![allow(dead_code)]
+
 use std::{fs, vec::Vec};
 
 use serde::{Deserialize, Serialize};

@@ -1,7 +1,8 @@
+#![allow(dead_code)]
 use macaddr::MacAddr6;
 use ruuvi_sensor_protocol::{SensorValues, MacAddress, Temperature, Humidity, Pressure, MeasurementSequenceNumber};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone,Copy,Debug)]
 pub struct RuuviMessage {
     hwaddr: MacAddr6,
     temperature: f32, // temperature as C
