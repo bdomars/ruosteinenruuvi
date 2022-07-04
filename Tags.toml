@@ -1,3 +1,7 @@
-[ruuvi]
-C4-0B-05-BD-E9-D5 = "Meltdown Britney"
-D1-D8-9A-E1-46-3A = "Climate Change Joe"
+[[tags]]
+name = "Joe"
+address = "12:34:45:12:aa:bb"
+
+[[tags]]
+name = "Britney"
+address = "12:34:45:12:aa:bb"
