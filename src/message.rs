@@ -1,9 +1,9 @@
-use hwaddr::HwAddr;
+use macaddr::MacAddr6;
 use ruuvi_sensor_protocol::{SensorValues, MacAddress, Temperature, Humidity, Pressure, MeasurementSequenceNumber};
 
 #[derive(Clone, Copy, Debug)]
 pub struct RuuviMessage {
-    hwaddr: HwAddr,
+    hwaddr: MacAddr6,
     temperature: f32, // temperature as C
     humidity: u8, // Relative humidity in %
     pressure: u16, // Atmospheric pressure in hPa
@@ -13,7 +13,7 @@ pub struct RuuviMessage {
 impl From<SensorValues> for RuuviMessage {
     fn from(sv: SensorValues) -> Self {
         RuuviMessage{
-            hwaddr: HwAddr::from(sv.mac_address().unwrap_or_default()),
+            hwaddr: MacAddr6::from(sv.mac_address().unwrap_or_default()),
             temperature: sv.temperature_as_millicelsius().unwrap_or_default() as f32 / 1000.0,
             humidity: (sv.humidity_as_ppm().unwrap_or_default() / 10_000) as u8,
             pressure: (sv.pressure_as_pascals().unwrap_or_default() / 100) as u16,
@@ -27,7 +27,7 @@ impl RuuviMessage {
         self.temperature
     }
 
-    fn mac(&self) -> HwAddr {
+    fn mac(&self) -> MacAddr6 {
         self.hwaddr
     }
 
