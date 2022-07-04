@@ -4,7 +4,6 @@
 use std::{fs, vec::Vec};
 
 use serde::{Deserialize, Serialize};
-use ruuvi::scan_btle;
 use tokio::{sync::broadcast};
 use macaddr::MacAddr6;
 
@@ -21,15 +20,10 @@ struct Config {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> ruuvi::Result<()>{
     let (tx, mut rx) = broadcast::channel(16);
 
-    tokio::spawn(async move {
-        match scan_btle(tx).await {
-            Ok(_) => println!("scan_btle completed with ok!"),
-            Err(e) => println!("scan_btle completed with error: {}", e),
-        };
-    });
+    tokio::spawn(ruuvi::scan_btle(tx));
 
     let contents = fs::read_to_string("Tags.toml")
     .expect("Something went wrong reading the file");
