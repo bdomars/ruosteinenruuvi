@@ -1,16 +1,10 @@
-use ruuvi::scan_btle;
 use tokio::{sync::broadcast};
 
 #[tokio::main]
-async fn main() {
+async fn main() -> ruuvi::Result<()>{
     let (tx, mut rx) = broadcast::channel(16);
 
-    tokio::spawn(async move {
-        let r = scan_btle(tx).await;
-        if r.is_err() {
-            println!("defuk? {}", r.unwrap_err());
-        }
-    });
+    tokio::spawn(ruuvi::scan_btle(tx));
 
     loop {
         let rm = rx.recv().await;
