@@ -3,6 +3,7 @@ use btleplug::platform::{Adapter, Manager};
 use futures::stream::StreamExt;
 use ruuvi_sensor_protocol::SensorValues;
 use tokio::sync::broadcast::Sender;
+use anyhow::Context;
 
 use crate::RuuviMessage;
 
@@ -14,10 +15,10 @@ async fn get_central(manager: &Manager) -> Adapter {
 }
 
 pub async fn scan_btle(tx: Sender<RuuviMessage>) -> crate::Result<()> {
-    let manager = Manager::new().await?;
+    let manager = Manager::new().await.context("manager failure")?;
     let central = get_central(&manager).await;
-    let mut events = central.events().await?;
-    central.start_scan(ScanFilter::default()).await?;
+    let mut events = central.events().await.context("error getting events")?;
+    central.start_scan(ScanFilter::default()).await.context("error starting scan")?;
     while let Some(event) = events.next().await {
         match event {
             CentralEvent::ManufacturerDataAdvertisement {
@@ -33,7 +34,7 @@ pub async fn scan_btle(tx: Sender<RuuviMessage>) -> crate::Result<()> {
                         }
                     };
                     let rm = RuuviMessage::from(sv);
-                    tx.send(rm)?;
+                    tx.send(rm).context("trying to send")?;
                 }
             }
             _ => {}
