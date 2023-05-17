@@ -14,7 +14,12 @@ async fn main() -> ruuvi::Result<()> {
     let (tx, mut rx) = broadcast::channel(16);
     tokio::spawn(ruuvi::scan_btle(tx));
     loop {
-        let rm = rx.recv().await?;
+        let rm = match rx.recv().await {
+            Ok(m) => m,
+            Err(error) => {
+                panic!("Received error from bluetooth stack: {:?}", error)
+            }
+        };
         let tr = tagger.tag(rm).await;
         println!("{:#?}", tr);
     }
